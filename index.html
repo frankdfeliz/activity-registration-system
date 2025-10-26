@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Actividades</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f4f6f8 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            max-width: 900px;
+            margin: 40px auto;
+            gap: 32px;
+        }
+        .container {
+            flex: 1 1 420px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(60, 80, 180, 0.10);
+            padding: 36px 28px 28px 28px;
+            position: relative;
+            overflow: hidden;
+            min-width: 320px;
+        }
+        .logo-circle {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: #eef2ff;
+            margin: 0 auto 18px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(60,80,180,0.08);
+        }
+        .logo-circle img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .logo-upload {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            font-size: 1.1rem;
+            color: #6366f1;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 28px;
+            color: #2563eb;
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+        form {
+            position: relative;
+            z-index: 1;
+        }
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 1.05rem;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 22px;
+        }
+        .input-group label {
+            margin-bottom: 7px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 1.05rem;
+            display: block;
+            position: relative;
+            z-index: 2;
+        }
+        .input-group i {
+            position: absolute;
+            left: 12px;
+            top: 38px;
+            color: #2563eb;
+            font-size: 1.1rem;
+            opacity: 0.7;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 11px 12px 11px 38px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #f9fafb;
+            transition: border 0.2s;
+            margin-top: 0;
+            box-sizing: border-box;
+        }
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: #6366f1;
+            outline: none;
+            background: #eef2ff;
+        }
+        button {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(90deg, #6366f1 0%, #2563eb 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.08rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(60,80,180,0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #2563eb 0%, #6366f1 100%);
+            transform: translateY(-2px) scale(1.02);
+        }
+        .message {
+            margin: 18px 0 10px 0;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.08rem;
+            padding: 8px 0;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .message.success {
+            color: #2563eb;
+            background: #eef2ff;
+        }
+        .message.error {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+        .records-panel {
+            flex: 1 1 350px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(60, 80, 180, 0.10);
+            padding: 28px 20px 20px 20px;
+            min-width: 280px;
+            margin-top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .records-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .records-title i {
+            color: #6366f1;
+            font-size: 1.1rem;
+        }
+        .records-list {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            max-height: 480px;
+        }
+        .record-card {
+            background: #eef2ff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(60,80,180,0.05);
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+        .record-card .record-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #2563eb;
+            font-size: 1.08rem;
+        }
+        .record-card .record-details {
+            font-size: 0.98rem;
+            color: #374151;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+        .record-card .record-details span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .record-card .record-date {
+            font-size: 0.92rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .record-card .record-usos {
+            font-size: 1.1rem;
+            color: #2563eb;
+            font-weight: 700;
+            background: #fff;
+            border-radius: 6px;
+            padding: 2px 8px;
+            margin-left: 8px;
+        }
+        .record-card .record-actions {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .record-card .record-actions button {
+            background: none;
+            border: none;
+            color: #6366f1;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .record-card .record-actions button:hover {
+            background: #e0e7ff;
+        }
+        @media (max-width: 900px) {
+            .main-layout {
+                flex-direction: column;
+                gap: 0;
+            }
+            .records-panel {
+                margin-top: 32px;
+            }
+        }
+        @media (max-width: 600px) {
+            .container, .records-panel {
+                padding: 16px 6px;
+                min-width: 0;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="container">
+            <div class="logo-circle" id="logoCircle">
+                <img id="logoImg" src="" alt="Logo" style="display:none;">
+                <span id="logoPlaceholder"><i class="fa-solid fa-image" style="font-size:2.5rem;color:#6366f1;"></i></span>
+                <input type="file" id="logoInput" accept="image/*" style="display:none;">
+            </div>
+            <span class="logo-upload" onclick="document.getElementById('logoInput').click();" title="Subir logo">
+                <i class="fa-solid fa-upload"></i>
+            </span>
+            <h2><i class="fa-solid fa-clipboard-list"></i> Registro de Actividades</h2>
+            <form id="activityForm">
+                <div class="input-group">
+                    <label for="nombre">Nombre completo</label>
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="nombre" name="nombre" placeholder="Nombre completo" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="actividad">Selecciona una actividad</label>
+                    <i class="fa-solid fa-bolt"></i>
+                    <select id="actividad" name="actividad" required>
+                        <option value="" disabled selected>Elige una actividad...</option>
+                        <option>Húndelo en el mar</option>
+                        <option>Encuentra el tesoro</option>
+                        <option>Juego de memoria</option>
+                        <option>Carrera de botes</option>
+                        <option>Vete de pesca</option>
+                        <option>Just Dance</option>
+                        <option>Decora tu slime</option>
+                        <option>Tiro al pulpo</option>
+                        <option>Pintacarita</option>
+                        <option>Inflables</option>
+                        <option>Videojuegos</option>
+                        <option>Simulador</option>
+                        <option>VR</option>
+                        <option>Polaroid</option>
+                        <option>Foto Digital</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="curso">Selecciona el curso</label>
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <select id="curso" name="curso" required>
+                        <option value="" disabled selected>Elige el curso...</option>
+                        <optgroup label="Primaria (Español)">
+                            <option>1ro de primaria</option>
+                            <option>2do de primaria</option>
+                            <option>3ro de primaria</option>
+                            <option>4to de primaria</option>
+                            <option>5to de primaria</option>
+                            <option>6to de primaria</option>
+                        </optgroup>
+                        <optgroup label="Secundaria (Español)">
+                            <option>1ro de secundaria</option>
+                            <option>2do de secundaria</option>
+                            <option>3ro de secundaria</option>
+                            <option>4to de secundaria</option>
+                            <option>5to de secundaria</option>
+                            <option>6to de secundaria</option>
+                        </optgroup>
+                        <optgroup label="English Grades">
+                            <option>1st grade</option>
+                            <option>2nd grade</option>
+                            <option>3rd grade</option>
+                            <option>4th grade</option>
+                            <option>5th grade</option>
+                            <option>6th grade</option>
+                            <option>7th grade</option>
+                            <option>8th grade</option>
+                            <option>9th grade</option>
+                            <option>10th grade</option>
+                            <option>11th grade</option>
+                            <option>12th grade</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="usos">Cantidad de usos</label>
+                    <i class="fa-solid fa-layer-group"></i>
+                    <input type="number" id="usos" name="usos" min="1" value="1" required>
+                </div>
+                <button type="submit"><i class="fa-solid fa-plus"></i> Registrar</button>
+            </form>
+            <div class="message" id="message"></div>
+        </div>
+        <div class="records-panel">
+            <div class="records-title"><i class="fa-solid fa-table-list"></i> Registros guardados</div>
+            <div class="records-list" id="recordsList"></div>
+        </div>
+    </div>
+    <script>
+        // Logo upload
+        document.getElementById('logoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('logoImg').src = ev.target.result;
+                    document.getElementById('logoImg').style.display = 'block';
+                    document.getElementById('logoPlaceholder').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // URL de tu Web App de Google Apps Script
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzPQsyuXC77UiKkZ-OcYJD0NwE2ZYaNuwjJ2kPB_T9ECQjIApCZPGTYEcGMTP4PgNgR5A/exec';
+
+        // Registrar actividad
+        document.getElementById('activityForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value.trim();
+            const actividad = document.getElementById('actividad').value;
+            const curso = document.getElementById('curso').value;
+            const usos = parseInt(document.getElementById('usos').value, 10);
+
+            if (!nombre || !actividad || !curso || isNaN(usos) || usos < 1) {
+                showMessage('Por favor, completa todos los campos.', false);
+                return;
+            }
+
+            showMessage('Enviando...', true);
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, actividad, curso, usos })
+                });
+                const data = await res.json();
+                showMessage(data.message, data.success);
+                if (data.success) {
+                    document.getElementById('activityForm').reset();
+                    fetchRecords();
+                }
+            } catch (err) {
+                showMessage('Error al conectar con el servidor.', false);
+            }
+        });
+
+        // Mostrar registros actuales
+        async function fetchRecords() {
+            try {
+                const res = await fetch(GAS_URL + '?action=read');
+                const data = await res.json();
+                if (data.success && Array.isArray(data.records)) {
+                    renderRecords(data.records);
+                } else {
+                    document.getElementById('recordsList').innerHTML = '<p>No hay registros guardados.</p>';
+                }
+            } catch {
+                document.getElementById('recordsList').innerHTML = '<p>Error al cargar registros.</p>';
+            }
+        }
+
+        // Renderizar registros
+        function renderRecords(records) {
+            const list = document.getElementById('recordsList');
+            if (!records.length) {
+                list.innerHTML = '<p style="color:#64748b;">No hay registros guardados.</p>';
+                return;
+            }
+            list.innerHTML = records.map((r, idx) => `
+                <div class="record-card">
+                    <div class="record-header">
+                        <i class="fa-solid fa-user"></i> ${r.Nombre}
+                        <span class="record-usos" title="Usos"><i class="fa-solid fa-layer-group"></i> ${r.Usos}</span>
+                    </div>
+                    <div class="record-details">
+                        <span><i class="fa-solid fa-bolt"></i> ${r.Actividad}</span>
+                        <span><i class="fa-solid fa-graduation-cap"></i> ${r.Curso}</span>
+                    </div>
+                    <div class="record-date"><i class="fa-solid fa-clock"></i> ${r['Última actualización']}</div>
+                </div>
+            `).join('');
+        }
+
+        // Inicializar
+        fetchRecords();
+
+        function showMessage(msg, success) {
+            const el = document.getElementById('message');
+            el.textContent = msg;
+            el.className = 'message ' + (success ? 'success' : 'error');
+        }
+    </script>
+</body>
+</html>
