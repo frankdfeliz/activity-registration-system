@@ -266,6 +266,9 @@
             }
         }
     </style>
+    <!-- Agrega estos dos scripts de Firebase justo aquí -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="main-layout">
@@ -355,6 +358,8 @@
         </div>
         <div class="records-panel">
             <div class="records-title"><i class="fa-solid fa-table-list"></i> Registros guardados</div>
+            <input type="text" id="searchInput" placeholder="Buscar por nombre..." 
+    style="width:93%;margin-bottom:12px;padding:8px 12px;border-radius:6px;border:1px solid #d1d5db;display:block;margin-left:auto;margin-right:auto;">
             <div class="records-list" id="recordsList"></div>
         </div>
     </div>
@@ -376,82 +381,135 @@
         // URL de tu Web App de Google Apps Script
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzPQsyuXC77UiKkZ-OcYJD0NwE2ZYaNuwjJ2kPB_T9ECQjIApCZPGTYEcGMTP4PgNgR5A/exec';
 
-        // Registrar actividad
-        document.getElementById('activityForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const nombre = document.getElementById('nombre').value.trim();
-            const actividad = document.getElementById('actividad').value;
-            const curso = document.getElementById('curso').value;
-            const usos = parseInt(document.getElementById('usos').value, 10);
+        // Configuración de Firebase (usa tus propios datos)
+        const firebaseConfig = {
+          apiKey: "AIzaSyCIRI91tEAev3vZpD2fakC-7v443Ncn-wU",
+          authDomain: "activity-registration-sy-54224.firebaseapp.com",
+          databaseURL: "https://activity-registration-sy-54224-default-rtdb.firebaseio.com",
+          projectId: "activity-registration-sy-54224",
+          storageBucket: "activity-registration-sy-54224.firebasestorage.app",
+          messagingSenderId: "927452065899",
+          appId: "1:927452065899:web:ba99a739beb57d729a012e"
+        };
 
-            if (!nombre || !actividad || !curso || isNaN(usos) || usos < 1) {
-                showMessage('Por favor, completa todos los campos.', false);
-                return;
-            }
+        // Inicializa Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-            showMessage('Enviando...', true);
+        let allRecords = []; // Guardará todos los registros para filtrar
 
-            try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre, actividad, curso, usos })
-                });
-                const data = await res.json();
-                showMessage(data.message, data.success);
-                if (data.success) {
-                    document.getElementById('activityForm').reset();
-                    fetchRecords();
-                }
-            } catch (err) {
-                showMessage('Error al conectar con el servidor.', false);
-            }
+        // Escucha cambios en tiempo real
+        db.ref('registros').on('value', snapshot => {
+            const records = snapshot.val() || {};
+            allRecords = Object.entries(records).map(([key, r]) => ({ ...r, key }));
+            renderRecords(allRecords);
         });
 
-        // Mostrar registros actuales
-        async function fetchRecords() {
-            try {
-                const res = await fetch(GAS_URL + '?action=read');
-                const data = await res.json();
-                if (data.success && Array.isArray(data.records)) {
-                    renderRecords(data.records);
-                } else {
-                    document.getElementById('recordsList').innerHTML = '<p>No hay registros guardados.</p>';
-                }
-            } catch {
-                document.getElementById('recordsList').innerHTML = '<p>Error al cargar registros.</p>';
-            }
-        }
+        // Barra de búsqueda
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const term = this.value.trim().toLowerCase();
+            const filtered = allRecords.filter(r => r.nombre.toLowerCase().includes(term));
+            renderRecords(filtered);
+        });
 
-        // Renderizar registros
+        // Guardar registro
+        document.getElementById('activityForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const nombre = document.getElementById('nombre').value.trim();
+          const actividad = document.getElementById('actividad').value;
+          const curso = document.getElementById('curso').value;
+          const usos = parseInt(document.getElementById('usos').value, 10);
+
+          if (!nombre || !actividad || !curso || isNaN(usos) || usos < 1) {
+            showMessage('Por favor, completa todos los campos.', false);
+            return;
+          }
+
+          // Stackeable: clave única por nombre+actividad+curso
+          const key = `${nombre}_${actividad}_${curso}`.replace(/\s+/g, '_');
+          db.ref('registros/' + key).once('value').then(snapshot => {
+            let data = snapshot.val();
+            let newUsos = usos;
+            if (data) newUsos += data.usos;
+            db.ref('registros/' + key).set({
+              nombre,
+              actividad,
+              curso,
+              usos: newUsos,
+              fecha: new Date().toISOString()
+            }, (error) => {
+              if (error) {
+                showMessage('Error al guardar en Firebase.', false);
+              } else {
+                showMessage(data ? 'Se incrementó la cantidad de usos.' : 'Actividad registrada.', true);
+                document.getElementById('activityForm').reset();
+                renderRecords();
+              }
+            });
+          });
+        });
+
+        // Renderizar registros con acciones
         function renderRecords(records) {
             const list = document.getElementById('recordsList');
             if (!records.length) {
                 list.innerHTML = '<p style="color:#64748b;">No hay registros guardados.</p>';
                 return;
             }
-            list.innerHTML = records.map((r, idx) => `
+            list.innerHTML = records.map(r => `
                 <div class="record-card">
                     <div class="record-header">
-                        <i class="fa-solid fa-user"></i> ${r.Nombre}
-                        <span class="record-usos" title="Usos"><i class="fa-solid fa-layer-group"></i> ${r.Usos}</span>
+                        <i class="fa-solid fa-user"></i> ${r.nombre}
+                        <span class="record-usos" title="Usos">
+                            <button onclick="updateUsos('${r.key}', -1)" style="background:none;border:none;color:#2563eb;font-size:1.1rem;">-</button>
+                            <i class="fa-solid fa-layer-group"></i> ${r.usos}
+                            <button onclick="updateUsos('${r.key}', 1)" style="background:none;border:none;color:#2563eb;font-size:1.1rem;">+</button>
+                        </span>
                     </div>
                     <div class="record-details">
-                        <span><i class="fa-solid fa-bolt"></i> ${r.Actividad}</span>
-                        <span><i class="fa-solid fa-graduation-cap"></i> ${r.Curso}</span>
+                        <span><i class="fa-solid fa-bolt"></i> ${r.actividad}</span>
+                        <span><i class="fa-solid fa-graduation-cap"></i> ${r.curso}</span>
                     </div>
-                    <div class="record-date"><i class="fa-solid fa-clock"></i> ${r['Última actualización']}</div>
+                    <div class="record-date"><i class="fa-solid fa-clock"></i> ${new Date(r.fecha).toLocaleString()}</div>
+                    <div class="record-actions">
+                        <button title="Eliminar registro" onclick="deleteRecord('${r.key}')" style="background:none;border:none;color:#dc2626;font-size:1.2rem;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
 
+        // Actualizar usos
+        window.updateUsos = function(key, delta) {
+            db.ref('registros/' + key).once('value').then(snapshot => {
+                let data = snapshot.val();
+                if (data) {
+                    let newUsos = data.usos + delta;
+                    if (newUsos <= 0) {
+                        db.ref('registros/' + key).remove();
+                    } else {
+                        db.ref('registros/' + key).update({
+                            usos: newUsos,
+                            fecha: new Date().toISOString()
+                        });
+                    }
+                }
+            });
+        }
+
+        // Eliminar registro
+        window.deleteRecord = function(key) {
+            db.ref('registros/' + key).remove();
+        }
+
         // Inicializar
-        fetchRecords();
+        renderRecords();
 
         function showMessage(msg, success) {
-            const el = document.getElementById('message');
-            el.textContent = msg;
-            el.className = 'message ' + (success ? 'success' : 'error');
+          const el = document.getElementById('message');
+          el.textContent = msg;
+          el.className = 'message ' + (success ? 'success' : 'error');
         }
     </script>
 </body>
